@@ -5,250 +5,24 @@ declare function acquireVsCodeApi(): {
 };
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import css from "./webview.css";
 import { createRoot } from "react-dom/client";
-import { History, LogOut, Plus, Settings } from "lucide-react";
-import { ChatComposer } from "./components/chat/composer";
+import { History, LogOut, Plus, Settings, ArrowUp } from "lucide-react";
 import {
   DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuTrigger,
+  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
 } from "./components/ui/dropdown-menu";
 
-type Message = {
-  role: "user" | "assistant";
-  text: string;
-};
+type Message = { role: "user" | "assistant"; text: string };
 
 type PanelMessage =
   | { type: "init"; authenticated?: boolean }
   | { type: "loggedIn" }
   | { type: "loggedOut" }
   | { type: "userInfo"; payload?: { email?: string; plan?: string } };
-
-const styles = `
-    :root {
-        color-scheme: dark;
-        --font-sans: 'Geist', 'Geist Fallback', 'Segoe UI', system-ui, sans-serif;
-        --text-primary: #e7e9ee;
-        --text-muted: #cfd3dd;
-        font-family: var(--font-sans);
-    }
-    html, body, #root {
-        height: 100%;
-    }
-    * { box-sizing: border-box; }
-    body {
-        margin: 0;
-        min-height: 100vh;
-        background: #070707;
-        color: var(--text-primary);
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        overflow: hidden;
-    }
-    .top-bar {
-        position: fixed;
-        top: 0; left: 0; right: 0;
-        height: 48px;
-        padding: 8px 16px;
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        background: #070707;
-        z-index: 3;
-    }
-    .toolbar-right {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .toolbar-icon {
-        width: 30px;
-        height: 30px;
-        display: grid;
-        place-items: center;
-        border-radius: 10px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        cursor: pointer;
-        transition: background 0.2s ease, border-color 0.2s ease;
-    }
-    .toolbar-icon:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.18);
-    }
-    .toolbar-icon svg { width: 16px; height: 16px; stroke: #cfd3dd; stroke-width: 1.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-    .status-wrapper { height: 48px; }
-    .dropdown-content {
-        background: #09090b;
-        border-radius: 16px;
-        border: 1px solid rgba(255,255,255,0.08);
-        padding: 10px 8px;
-        min-width: 260px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.45);
-        z-index: 5;
-    }
-    .dropdown-label {
-        padding: 6px 10px 2px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: #cfd3dd;
-        letter-spacing: 0.05em;
-    }
-    .dropdown-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 12px;
-        border-radius: 12px;
-        cursor: pointer;
-        transition: background 0.15s ease, border-color 0.15s ease;
-    }
-    .dropdown-item:hover {
-        background: rgba(255,255,255,0.04);
-    }
-    .dropdown-item-text {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        flex: 1;
-        min-width: 0;
-    }
-    .dropdown-item-label {
-        font-weight: 600;
-        color: #e7e9ee;
-        font-size: 0.95rem;
-    }
-    .dropdown-item-description {
-        font-size: 0.78rem;
-        color: #cfd3dd;
-    }
-    .dropdown-account {
-        padding: 6px 10px 8px;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-    .dropdown-account-email {
-        color: #e7e9ee;
-        font-weight: 600;
-        font-size: 0.95rem;
-        word-break: break-word;
-    }
-    .dropdown-account-plan {
-        color: #9aa0ad;
-        font-size: 0.85rem;
-    }
-    .content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        min-height: 0;
-        padding-top: 48px;
-        overflow: hidden;
-    }
-    .messages {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-        padding: 16px 22px 140px;
-        min-height: 0;
-        overflow-y: auto;
-    }
-    .messages-inner { width: min(768px, calc(100% - 40px)); margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
-    .message-row { display: flex; }
-    .message-row.user { justify-content: flex-end; }
-    .message-bubble { max-width: min(70%, 520px); background: #121212; border: 1px solid #1E1E1E; color: #e7e9ee; padding: 10px 14px; border-radius: 16px; font-size: 0.95rem; line-height: 1.4; }
-    .assistant-line { max-width: min(70%, 520px); color: #cfd3dd; font-size: 0.95rem; line-height: 1.4; }
-    .composer-panel {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: #070707;
-        padding: 6px 0 12px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 2;
-    }
-    .composer-wrapper { width: min(820px, calc(100% - 24px)); margin: 0 auto; }
-    .composer-form { display: flex; flex-direction: column; gap: 8px; width: 100%; }
-    .composer-shell {
-        position: relative;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        border-radius: 20px;
-        border: 1px solid #262626;
-        background: #0A0A0A;
-        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.52);
-        transition: border 0.2s ease, box-shadow 0.2s ease;
-    }
-    .composer-textarea {
-        flex: 1;
-        height: 32px;
-        border: none;
-        background: #0A0A0A;
-        color: #f1f3f7;
-        font-size: 1rem;
-        font-family: inherit;
-        line-height: 32px;
-        resize: none;
-        letter-spacing: 0.01em;
-        padding: 0;
-        margin: 0;
-    }
-    .composer-textarea:focus { outline: none; }
-    .composer-actions { display: flex; gap: 8px; align-items: center; }
-    .composer-send-button {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        border: none;
-        background: linear-gradient(135deg, #f8fbfe, #d6e6ff);
-        color: #0b0c11;
-        display: grid;
-        place-items: center;
-        cursor: pointer;
-        box-shadow: 0 16px 26px rgba(8, 10, 25, 0.35);
-        transition: transform 0.15s ease, box-shadow 0.2s ease;
-    }
-    .composer-send-button:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
-    .composer-send-button:not(:disabled):active { transform: translateY(1px); }
-    .composer-shell:focus-within {
-        border-color: #525252;
-        box-shadow: 0 0 0 1px #525252, 0 0 0 3px #282b54;
-    }
-    .login-stage {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        padding: 24px;
-        color: #e7e9ee;
-    }
-    .login-stage h1 { margin: 0; }
-    .login-actions { display: flex; gap: 10px; }
-    .login-actions .filled { background: #0b84ff; color: #fff; border: none; padding: 10px 16px; border-radius: 12px; cursor: pointer; }
-    .login-actions .secondary { background: transparent; color: #9aa0ad; border: 1px solid #1e1e1e; padding: 10px 16px; border-radius: 12px; }
-    @keyframes pulse {
-        0% {
-            opacity: 0.8;
-        }
-        100% {
-            opacity: 0;
-        }
-    }
-`;
 
 const vscodeApi =
   typeof acquireVsCodeApi !== "undefined" ? acquireVsCodeApi() : null;
@@ -338,6 +112,16 @@ function App() {
     [authenticated, mockReplies, scrollToLatest]
   );
 
+  const [composerValue, setComposerValue] = useState("");
+
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    if (composerValue.trim()) {
+      sendPrompt(composerValue);
+      setComposerValue("");
+    }
+  }, [composerValue, sendPrompt]);
+
   useEffect(() => {
     if (!messages.length) {
       return;
@@ -414,74 +198,130 @@ function App() {
 
   return (
     <>
-      <style>{styles}</style>
-      <div className="top-bar">{StatusIcons}</div>
-      <div className="content">
-        {!authenticated ? (
-          <div className="login-stage">
-            <h1>Log in to LLM Client</h1>
-            <p>
-              Authenticate through your LLM Client account and the extension
-              will remember your session.
-            </p>
-            <div className="login-actions">
-              <button
-                className="filled"
-                type="button"
-                onClick={() => {
-                  setLoginStatus("Opening the LLM Client login flow...");
-                  vscodeApi?.postMessage({ type: "openAuth" });
-                }}
-              >
-                Log in with LLM Client
-              </button>
-              <button className="secondary" type="button" disabled>
-                Use API Key
-              </button>
+      <style>{css}</style>
+      <div className="dark quarry-theme">
+        <div className="flex flex-col h-screen bg-background text-foreground">
+          {/* Top Navigation Bar */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card shrink-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold">Quarry</h1>
             </div>
-            <div className="login-actions">
-              <span style={{ color: "#9aa0ad", fontSize: "0.85rem" }}>
-                {loginStatus}
-              </span>
-              <button
-                className="secondary"
-                type="button"
-                onClick={() => {
-                  setLoginStatus("Finishing login...");
-                  vscodeApi?.postMessage({ type: "authComplete" });
-                }}
-              >
-                Already completed login? Continue
-              </button>
-            </div>
+            <div className="flex items-center gap-1">{StatusIcons}</div>
           </div>
-        ) : (
-          <>
-            <div className="messages" ref={messagesRef}>
-              <div className="messages-inner">
-                {messages.map((message, index) => (
-                  <div
-                    className={`message-row ${
-                      message.role === "user" ? "user" : ""
-                    }`}
-                    key={`${message.role}-${index}`}
-                  >
-                    {message.role === "user" ? (
-                      <div className="message-bubble">{message.text}</div>
-                    ) : (
-                      <div className="assistant-line">{message.text}</div>
-                    )}
+
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {!authenticated ? (
+              <div className="flex flex-col items-center justify-center h-full gap-6 px-4">
+                <div className="max-w-md text-center space-y-4">
+                  <h2 className="text-2xl font-bold">Log in to LLM Client</h2>
+                  <p className="text-muted-foreground">
+                    Authenticate through your LLM Client account and the extension
+                    will remember your session.
+                  </p>
+                  <div className="flex flex-col gap-3 mt-6">
+                    <button
+                      className="px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity font-medium"
+                      type="button"
+                      onClick={() => {
+                        setLoginStatus("Opening the LLM Client login flow...");
+                        vscodeApi?.postMessage({ type: "openAuth" });
+                      }}
+                    >
+                      Log in with LLM Client
+                    </button>
+                    <button
+                      className="px-4 py-2.5 bg-secondary text-secondary-foreground rounded-lg opacity-50 cursor-not-allowed font-medium"
+                      type="button"
+                      disabled
+                    >
+                      Use API Key
+                    </button>
                   </div>
-                ))}
+                  <div className="flex flex-col gap-2 mt-4">
+                    <span className="text-sm text-muted-foreground">
+                      {loginStatus}
+                    </span>
+                    <button
+                      className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:opacity-90 transition-opacity text-sm"
+                      type="button"
+                      onClick={() => {
+                        setLoginStatus("Finishing login...");
+                        vscodeApi?.postMessage({ type: "authComplete" });
+                      }}
+                    >
+                      Already completed login? Continue
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="composer-panel">
-              <div className="composer-wrapper">
-                <ChatComposer onSend={sendPrompt} authenticated={authenticated} />
-              </div>
-            </div>
-          </>
-        )}
+            ) : (
+              <>
+                {/* Messages Container */}
+                <div className="flex-1 overflow-y-auto" ref={messagesRef}>
+                  <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+                    {messages.length === 0 && (
+                      <div className="flex flex-col items-center justify-center text-center py-12">
+                        <h2 className="text-4xl font-bold tracking-tight mb-2">Quarry</h2>
+                        <p className="text-muted-foreground">Ask me anything</p>
+                      </div>
+                    )}
+                    {messages.map((message, index) => (
+                      <div
+                        className={`flex ${
+                          message.role === "user" ? "justify-end" : "justify-start"
+                        }`}
+                        key={`${message.role}-${index}`}
+                      >
+                        {message.role === "user" ? (
+                          <div className="bg-accent text-accent-foreground px-4 py-3 rounded-2xl max-w-[85%] break-words">
+                            {message.text}
+                          </div>
+                        ) : (
+                          <div className="text-foreground max-w-[85%] break-words">
+                            {message.text}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Composer at Bottom */}
+                <div className="border-t border-border bg-card shrink-0">
+                  <div className="max-w-3xl mx-auto px-4 py-4">
+                    <form onSubmit={handleSubmit} className="relative">
+                      <textarea
+                        className="w-full px-4 py-3 pr-12 bg-input border border-border rounded-2xl resize-none text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        placeholder="Ask Quarry..."
+                        rows={1}
+                        value={composerValue}
+                        onChange={(e) => setComposerValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSubmit(e);
+                          }
+                        }}
+                        style={{
+                          minHeight: "48px",
+                          maxHeight: "200px"
+                        }}
+                      />
+                      <button
+                        type="submit"
+                        disabled={!composerValue.trim()}
+                        className="absolute right-3 bottom-3 p-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <ArrowUp size={18} />
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </>
   );
