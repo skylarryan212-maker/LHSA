@@ -2,7 +2,11 @@
 	"compilerOptions": {
 		"baseUrl": ".",
 		"paths": {
-			"@/*": ["src/*"]
+			"@/*": ["src/*"],
+			"next/link": ["src/lib/mock-link.tsx"],
+			"next/image": ["src/lib/mock-image.tsx"],
+			"next/dynamic": ["src/lib/mock-dynamic.tsx"],
+			"next/navigation": ["src/lib/mock-next.tsx"]
 		},
 		"module": "Node16",
 		"target": "ES2022",
@@ -22,5 +26,12 @@
 		// "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
 		// "noUnusedParameters": true,  /* Report errors on unused parameters. */
 	},
-	"exclude": ["public", "external_new_client", "node_modules"]
+	"exclude": [
+		"public",
+		"external_new_client",
+		"node_modules",
+		"src/lib/**",
+		"src/components/**",
+		"src/app/**"
+	]
 }

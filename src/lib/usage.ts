@@ -1,0 +1,176 @@
+import { calculateCost, calculateGpt4oTranscribeCost } from "@/lib/pricing";
+import { measureAudioDurationSeconds } from "@/lib/audio-duration";
+import { supabaseServerAdmin } from "@/lib/supabase/server";
+import { estimateTokens } from "@/lib/tokens/estimateTokens";
+import { invalidateCache } from "@/lib/server-cache";
+
+export interface UsageLogParams {
+  userId?: string | null;
+  conversationId?: string | null;
+  model: string;
+  inputTokens: number;
+  cachedTokens?: number;
+  outputTokens?: number;
+  estimatedCost?: number;
+  eventType?: string;
+  metadata?: Record<string, unknown> | null;
+  step?: string | null;
+  runId?: string | null;
+}
+
+export interface UsageEventParams {
+  userId?: string | null;
+  conversationId?: string | null;
+  eventType?: string;
+  model: string;
+  inputTokens?: number;
+  cachedTokens?: number;
+  outputTokens?: number;
+  costUsd?: number;
+  metadata?: Record<string, unknown> | null;
+}
+
+export async function logUsageEvent({
+  userId,
+  conversationId,
+  eventType = "llm",
+  model,
+  inputTokens = 0,
+  cachedTokens = 0,
+  outputTokens = 0,
+  costUsd = 0,
+  metadata = null,
+}: UsageEventParams) {
+  if (!userId) return;
+  try {
+    const supabase = await supabaseServerAdmin();
+    const payload = {
+      user_id: userId,
+      conversation_id: conversationId ?? null,
+      event_type: eventType,
+      model,
+      input_tokens: inputTokens,
+      cached_tokens: cachedTokens,
+      output_tokens: outputTokens,
+      cost_usd: costUsd,
+      metadata: metadata ?? {},
+      created_at: new Date().toISOString(),
+    };
+    const { error } = await (supabase as any).from("usage_events").insert(payload);
+    if (error) {
+      console.error("[usage] Failed to log usage event:", error);
+    }
+  } catch (error) {
+    console.error("[usage] Unexpected error logging usage event:", error);
+  }
+}
+
+export async function logUsageRecord({
+  userId,
+  conversationId,
+  model,
+  inputTokens,
+  cachedTokens = 0,
+  outputTokens = 0,
+  estimatedCost,
+  eventType,
+  metadata,
+  step,
+  runId,
+}: UsageLogParams) {
+  if (!userId) return;
+
+  try {
+    const supabase = await supabaseServerAdmin();
+    const cost =
+      typeof estimatedCost === "number"
+        ? estimatedCost
+        : calculateCost(model, inputTokens, cachedTokens, outputTokens);
+    const { randomUUID } = require("crypto");
+    const payload = {
+      id: randomUUID(),
+      user_id: userId,
+      conversation_id: conversationId ?? null,
+      model,
+      input_tokens: inputTokens,
+      cached_tokens: cachedTokens,
+      output_tokens: outputTokens,
+      estimated_cost: cost,
+      step: step ?? null,
+      run_id: runId ?? null,
+      created_at: new Date().toISOString(),
+    };
+    const { error } = await (supabase as any)
+      .from("user_api_usage")
+      .insert(payload);
+    if (error) {
+      console.error("[usage] Failed to log usage:", error);
+    } else {
+      invalidateCache(`monthlySpending:${userId}`);
+    }
+    await logUsageEvent({
+      userId,
+      conversationId,
+      eventType: eventType ?? "llm",
+      model,
+      inputTokens,
+      cachedTokens,
+      outputTokens,
+      costUsd: cost,
+      metadata,
+    });
+  } catch (error) {
+    console.error("[usage] Unexpected error logging usage:", error);
+  }
+}
+
+const BYTES_PER_SECOND = 18_000;
+
+export function estimateAudioDurationSeconds(fileSizeBytes: number) {
+  return fileSizeBytes / BYTES_PER_SECOND;
+}
+
+export async function logGpt4oTranscribeUsageFromBytes({
+  userId,
+  conversationId,
+  fileSizeBytes,
+  transcript,
+  durationSeconds,
+  buffer,
+  fileName,
+  mimeType,
+}: {
+  userId?: string | null;
+  conversationId?: string | null;
+  fileSizeBytes: number;
+  transcript?: string;
+  durationSeconds?: number;
+  buffer?: Buffer;
+  fileName?: string;
+  mimeType?: string;
+}) {
+  if (!userId) return;
+  const duration =
+    typeof durationSeconds === "number"
+      ? durationSeconds
+      : buffer
+        ? await measureAudioDurationSeconds(buffer, fileName, mimeType)
+        : fileSizeBytes / 18_000;
+  const textTokens = transcript ? estimateTokens(transcript) : 0;
+  const cost = calculateGpt4oTranscribeCost(duration, textTokens);
+  await logUsageRecord({
+    userId,
+    conversationId,
+    model: "gpt-4o-transcribe",
+    inputTokens: 0,
+    cachedTokens: 0,
+    outputTokens: textTokens,
+    estimatedCost: cost,
+    eventType: "transcribe",
+    metadata: {
+      durationSeconds: duration,
+      fileName: fileName ?? null,
+      mimeType: mimeType ?? null,
+    },
+  });
+}
