@@ -1,8 +1,14 @@
 {
 	"compilerOptions": {
+		"typeRoots": ["./src/types", "./node_modules/@types"],
 		"baseUrl": ".",
 		"paths": {
 			"@/*": ["src/*"],
+			"@lib/*": ["src/lib/*"],
+			"@openrouter/sdk": ["src/lib/openrouter-sdk.ts"],
+			"openai/resources/chat/completions": ["src/lib/openai-chat.ts"],
+			"@supabase/supabase-js": ["src/lib/supabase/ssr-shim.ts"],
+			"@/lib/supabase/browser-client": ["src/lib/supabase/browser-client.ts"],
 			"next/link": ["src/lib/mock-link.tsx"],
 			"next/image": ["src/lib/mock-image.tsx"],
 			"next/dynamic": ["src/lib/mock-dynamic.tsx"],
@@ -26,12 +32,12 @@
 		// "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
 		// "noUnusedParameters": true,  /* Report errors on unused parameters. */
 	},
+	"include": [
+		"src"
+	],
 	"exclude": [
 		"public",
 		"external_new_client",
-		"node_modules",
-		"src/lib/**",
-		"src/components/**",
-		"src/app/**"
+		"node_modules"
 	]
 }

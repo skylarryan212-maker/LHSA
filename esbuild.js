@@ -49,6 +49,12 @@ async function main() {
 		outfile: 'dist/webview.js',
 		external: [],
 		logLevel: 'silent',
+		assetNames: 'fonts/[name]',
+		loader: {
+			'.woff2': 'file',
+			'.woff': 'file',
+			'.ttf': 'file',
+		},
 		define: { 'process.env.NODE_ENV': JSON.stringify(production ? 'production' : 'development') },
 		plugins: [esbuildProblemMatcherPlugin],
 	};

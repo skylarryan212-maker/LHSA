@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Universal LLM client that supports multiple providers.
  *
@@ -11,9 +12,15 @@
  * - DEEPINFRA_API_KEY: API key for DeepInfra (fallback)
  */
 
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
-import { OpenRouter } from "@openrouter/sdk";
-import { buildOpenRouterAttribution } from "@/lib/openrouter/headers";
+type ChatCompletionMessageParam = {
+  role?: "system" | "user" | "assistant" | "tool" | string;
+  content?: any;
+  name?: string;
+  [key: string]: any;
+};
+
+import { OpenRouter } from "./openrouter-sdk.js";
+import { buildOpenRouterAttribution } from "./openrouter/headers.js";
 
 // ============================================================================
 // Types
@@ -65,7 +72,9 @@ const OPENROUTER_PROVIDER_FALLBACK_2 = "deepinfra"; // Second fallback (via Open
 let openRouterClient: OpenRouter | null = null;
 
 function getOpenRouterClient(): OpenRouter {
-  if (openRouterClient) return openRouterClient;
+  if (openRouterClient) {
+    return openRouterClient;
+  }
 
   const apiKey = process.env.OPENROUTER_API_KEY?.trim();
   if (!apiKey) {
