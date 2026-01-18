@@ -18,10 +18,8 @@ export function useMarkdownWorker() {
     // Initialize worker
     if (typeof window !== 'undefined' && !workerRef.current) {
       try {
-        workerRef.current = new Worker(
-          new URL('../workers/markdown-worker.ts', import.meta.url),
-          { type: 'module' }
-        );
+        const workerUrl = new URL('../workers/markdown-worker.ts', window.location.href);
+        workerRef.current = new Worker(workerUrl, { type: 'module' });
 
         workerRef.current.onmessage = (event: MessageEvent<WorkerResponse>) => {
           const response = event.data;

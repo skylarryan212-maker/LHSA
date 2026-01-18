@@ -1,16 +1,19 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { createServerClient } from "./ssr-shim";
 import { SUPABASE_AUTH_STORAGE_KEY, SUPABASE_TOKEN_COOKIE } from "@/lib/supabase/constants";
 import type { Database } from "./types";
 
 export async function getAuthTokenServer() {
   try {
-    const maybe = cookies();
-    const cookieStore =
-      maybe && typeof (maybe as any).then === "function" ? await maybe : maybe;
-    return (cookieStore as any).get(SUPABASE_TOKEN_COOKIE)?.value || null;
+    if (typeof document === "undefined") {
+      return null;
+    }
+    const match = document.cookie
+      .split(";")
+      .map((cookie) => cookie.trim())
+      .find((cookie) => cookie.startsWith(`${SUPABASE_TOKEN_COOKIE}=`));
+    return match ? decodeURIComponent(match.split("=")[1] ?? "") : null;
   } catch {
     return null;
   }
@@ -20,17 +23,24 @@ export async function supabaseServer() {
   // Turbopack RSC / Next versions may make `cookies()` async. Call it and
   // await if it returns a Promise; otherwise use the value directly. If
   // cookies are unavailable, degrade to stateless behavior.
-  let cookieStore: any = null;
-  try {
-    const maybe = cookies();
-    if (maybe && typeof (maybe as any).then === "function") {
-      cookieStore = await maybe;
-    } else {
-      cookieStore = maybe;
-    }
-  } catch {
-    cookieStore = null;
-  }
+  const cookieStore = {
+    get(name: string) {
+      if (typeof document === "undefined") {
+        return undefined;
+      }
+      const match = document.cookie
+        .split(";")
+        .map((cookie) => cookie.trim())
+        .find((cookie) => cookie.startsWith(`${name}=`));
+      if (!match) {
+        return undefined;
+      }
+      return { value: decodeURIComponent(match.split("=")[1] ?? "") };
+    },
+    set(_name: string, _value: string, _options?: any) {
+      // noop in webview
+    },
+  } as const;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -86,8 +96,7 @@ export async function supabaseServerAdmin() {
     throw new Error("Supabase admin environment variables are not set");
   }
 
-  const { createClient } = await import("@supabase/supabase-js");
-  return createClient<Database>(supabaseUrl, supabaseServiceKey, {
+  return createServerClient<Database>(supabaseUrl, supabaseServiceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

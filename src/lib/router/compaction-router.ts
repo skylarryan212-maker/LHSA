@@ -1,4 +1,9 @@
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+type ChatCompletionMessageParam = {
+  role?: "system" | "user" | "assistant" | "tool" | string;
+  content?: any;
+  name?: string;
+  [key: string]: any;
+};
 import { callLLM } from "../llm-client";
 import { calculateCost } from "../pricing";
 import { logUsageRecord } from "../usage";

@@ -26,3 +26,28 @@ export async function moveConversationToProjectAction(...args: any[]) {
   return { success: false, error: "moveConversationToProject not implemented" };
 }
 export const renameConversationAction = updateConversationTitle;
+
+// Compatibility exports expected by chat shell
+export async function startGlobalConversationAction(..._args: any[]) {
+  return {
+    success: false,
+    error: "Not implemented in VS Code extension",
+    conversationId: null,
+    message: null,
+    conversation: null,
+  } as any;
+}
+
+export async function startProjectConversationAction(..._args: any[]) {
+  return {
+    success: false,
+    error: "Not implemented in VS Code extension",
+    conversationId: null,
+    message: null,
+    conversation: null,
+  } as any;
+}
+
+export async function deleteAllConversationsAction(..._args: any[]) {
+  return { success: false, error: "Not implemented in VS Code extension", message: "Not implemented" };
+}

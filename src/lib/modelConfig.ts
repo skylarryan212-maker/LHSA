@@ -397,7 +397,7 @@ export async function getModelAndReasoningConfigWithLLM(
   let availableMemoryTypes: string[] = [];
   if (userId) {
     try {
-      const { getMemoryTypes } = await import("./memory");
+      const { getMemoryTypes } = await import("./memory.js");
       availableMemoryTypes = await getMemoryTypes(userId);
     } catch (err) {
       console.error("[modelConfig] Failed to get memory types:", err);
@@ -406,7 +406,7 @@ export async function getModelAndReasoningConfigWithLLM(
 
   if (shouldUseLLMRouter) {
     try {
-      const { routeWithLLM } = await import("./llm-router");
+      const { routeWithLLM } = await import("./llm-router.js");
 
       console.log("[modelConfig] Attempting LLM-based routing");
 

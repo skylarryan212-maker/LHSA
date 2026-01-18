@@ -13,7 +13,7 @@ export async function extractZipToTemp(buffer: ArrayBuffer, prefix: string) {
   let projectsEntryName: string | null = null
   const entryNames: string[] = []
 
-  const entries = Object.values(zip.files)
+  const entries = Object.values(zip.files) as any[]
   for (const entry of entries) {
     if (entry.dir) continue
     const content = await entry.async('nodebuffer')

@@ -37,7 +37,7 @@ export async function requireUserIdServer() {
 }
 
 export async function getCurrentUserIdClient() {
-  const { default: supabaseClient } = await import("@/lib/supabase/browser-client");
+  const supabaseClient = (await import("./browser-client.js")).default as any;
   const { data, error } = await supabaseClient.auth.getUser();
   if (error && error.message !== "Auth session missing!") {
     throw new Error(`Failed to get current user (client): ${error.message}`);

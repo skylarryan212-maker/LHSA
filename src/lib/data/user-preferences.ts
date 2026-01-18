@@ -10,11 +10,11 @@ export async function getUserPreferences() {
   const supabase = await supabaseServer();
   const userId = await requireUserIdServer();
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase
     .from("user_preferences")
     .select("*")
     .eq("user_id", userId)
-    .maybeSingle<UserPreferencesRow>();
+    .maybeSingle()) as any;
 
   if (error && error.code !== "PGRST116") {
     // PGRST116 is "not found", which is ok - we'll create it

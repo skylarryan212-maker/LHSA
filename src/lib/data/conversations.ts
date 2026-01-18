@@ -50,7 +50,7 @@ export async function getConversationsForUser(options?: {
     }
   }
 
-  const { data: conversations, error } = await conversationQuery.returns<ConversationRow[]>();
+  const { data: conversations, error } = await (conversationQuery as any);
 
   if (error) {
     throw new Error(`Failed to load conversations: ${error.message}`);
@@ -111,7 +111,7 @@ export async function getConversationById(conversationId: string) {
     .select("*")
     .eq("id", conversationId)
     .eq("user_id", userId)
-    .maybeSingle<ConversationRow>();
+    .maybeSingle();
 
   if (error) {
     throw new Error(`Failed to load conversation: ${error.message}`);

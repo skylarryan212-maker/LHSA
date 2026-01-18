@@ -21,13 +21,12 @@ export async function getMessagesForConversation(conversationId: string) {
   const supabase = await supabaseServer();
   const userId = await requireUserIdServer();
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase
     .from("messages")
     .select("*")
     .eq("conversation_id", conversationId)
     .eq("user_id", userId)
-    .order("created_at", { ascending: true })
-    .returns<MessageRow[]>();
+    .order("created_at", { ascending: true })) as any;
 
   if (error) {
     throw new Error(`Failed to load messages: ${error.message}`);
@@ -62,7 +61,7 @@ export async function getMessagesForConversationPage(
     query = query.lt("created_at", before);
   }
 
-  const { data, error } = await query.returns<MessageRow[]>();
+  const { data, error } = await (query as any);
 
   if (error) {
     throw new Error(`Failed to load messages: ${error.message}`);

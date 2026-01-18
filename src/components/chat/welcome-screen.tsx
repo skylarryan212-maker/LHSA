@@ -5,7 +5,7 @@ interface WelcomeScreenProps {
   emptyStateTransform?: string
   emptyStatePaddingTop?: string
   emptyStateJustifyClass: string
-  centeredComposerRef?: React.RefObject<HTMLDivElement | null>
+  centeredComposerRef?: React.Ref<HTMLDivElement>
 }
 
 export function WelcomeScreen({

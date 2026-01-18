@@ -21,7 +21,7 @@ import dynamic from "next/dynamic";
 
 // Dev-only performance overlay (lazy loaded)
 const PerfOverlay = dynamic(
-  () => import("@/components/dev/PerfOverlay").then((mod) => mod.PerfOverlay),
+  () => import("../dev/PerfOverlay.js").then((mod) => mod.PerfOverlay),
   { ssr: false }
 );
 
@@ -73,19 +73,19 @@ import {
 } from "@/lib/view-transitions";
 
 const SettingsModal = dynamic(
-  () => import("@/components/settings-modal").then((mod) => mod.SettingsModal),
+  () => import("../settings-modal.js").then((mod) => mod.SettingsModal),
   { ssr: false }
 );
 const UsageLimitModal = dynamic(
-  () => import("@/components/usage-limit-modal").then((mod) => mod.UsageLimitModal),
+  () => import("../usage-limit-modal.js").then((mod) => mod.UsageLimitModal),
   { ssr: false }
 );
 const NewProjectModal = dynamic(
-  () => import("@/components/projects/new-project-modal").then((mod) => mod.NewProjectModal),
+  () => import("../projects/new-project-modal.js").then((mod) => mod.NewProjectModal),
   { ssr: false }
 );
 const MarketFeedSidebar = dynamic(
-  () => import("@/components/market-agent/market-feed-sidebar").then((mod) => mod.MarketFeedSidebar),
+  () => import("../market-agent/market-feed-sidebar.js").then((mod) => mod.MarketFeedSidebar),
   { ssr: false }
 );
 
@@ -2971,7 +2971,12 @@ export default function ChatPageShell({
       // Do not show a file-reading indicator unless prompted by server status events
 
       // Get location data if available
-      let locationData = null;
+      let locationData: {
+        lat?: number | null;
+        lng?: number | null;
+        city?: string | null;
+        timezone?: string | null;
+      } | null = null;
       try {
         const locationStr = localStorage.getItem("location_data");
         if (locationStr) {
@@ -3723,7 +3728,12 @@ export default function ChatPageShell({
     // Re-stream with the specific retry model (not changing currentModel)
     try {
       // Get location data if available
-      let locationData = null;
+      let locationData: {
+        lat?: number | null;
+        lng?: number | null;
+        city?: string | null;
+        timezone?: string | null;
+      } | null = null;
       try {
         const locationStr = localStorage.getItem("location_data");
         if (locationStr) {

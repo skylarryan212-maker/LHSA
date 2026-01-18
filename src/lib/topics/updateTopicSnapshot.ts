@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+type SupabaseClient<T = any> = any;
 import type { Database } from "@/lib/supabase/types";
 import { estimateTokens } from "@/lib/tokens/estimateTokens";
 import { sanitizeTopicMessageContent } from "@/lib/topics/messageSanitizer";

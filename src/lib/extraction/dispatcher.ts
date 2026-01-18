@@ -12,24 +12,24 @@ import { ndjsonExtractor } from "./extractors/ndjson";
 async function loadExtractor(kind: string): Promise<Extractor> {
   switch (kind) {
     case "pdf": {
-      const mod = await import("./extractors/pdf");
+      const mod = await import("./extractors/pdf.js");
       return mod.pdfExtractor;
     }
     case "zip": {
-      const mod = await import("./extractors/archiveZip");
+      const mod = await import("./extractors/archiveZip.js");
       return mod.archiveZipExtractor;
     }
     case "odf": {
-      const mod = await import("./extractors/odf");
+      const mod = await import("./extractors/odf.js");
       return mod.odfExtractor;
     }
     case "epub": {
-      const mod = await import("./extractors/epub");
+      const mod = await import("./extractors/epub.js");
       return mod.epubExtractor;
     }
     case "tar":
     case "gzip": {
-      const mod = await import("./extractors/archiveTarGzip");
+      const mod = await import("./extractors/archiveTarGzip.js");
       return mod.archiveTarGzipExtractor;
     }
     case "ndjson": {
@@ -42,7 +42,7 @@ async function loadExtractor(kind: string): Promise<Extractor> {
       return structuredExtractor;
     }
     case "rtf": {
-      const mod = await import("./extractors/rtf");
+      const mod = await import("./extractors/rtf.js");
       return mod.rtfExtractor;
     }
     case "image": {
@@ -56,15 +56,15 @@ async function loadExtractor(kind: string): Promise<Extractor> {
       return inlineImageExtractor;
     }
     case "audio": {
-      const mod = await import("./extractors/audio");
+      const mod = await import("./extractors/audio.js");
       return mod.audioExtractor;
     }
     case "video": {
-      const mod = await import("./extractors/video");
+      const mod = await import("./extractors/video.js");
       return mod.videoExtractor;
     }
     case "legacy_office": {
-      const mod = await import("./extractors/legacyOffice");
+      const mod = await import("./extractors/legacyOffice.js");
       return mod.legacyOfficeExtractor;
     }
     case "tsv":

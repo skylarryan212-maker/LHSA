@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import type { ClientOptions } from "openai";
+type ClientOptions = any;
 
 type LogLevel = "off" | "error" | "warn" | "info" | "debug";
 

@@ -2,3 +2,7 @@
 export async function getHumanWritingUsage(...args: any[]) {
   return { usage: 0, limit: 0 };
 }
+
+export async function getHumanWritingMonthlySpending(..._args: any[]) {
+  return 0;
+}

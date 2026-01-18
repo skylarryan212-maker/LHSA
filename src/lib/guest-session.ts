@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import type { Database } from "@/lib/supabase/types";
 
@@ -32,7 +32,7 @@ async function createGuestSessionRecord(
 }
 
 export async function ensureGuestSession(
-  request: NextRequest,
+  request: any,
   supabase: SupabaseClient
 ): Promise<{
   session: GuestSessionRow;
@@ -113,7 +113,7 @@ export async function addGuestUsage(
     console.error("[guestSession] Failed to record guest usage:", error);
   }
 }
-export function attachGuestCookie(response: NextResponse, value?: string) {
+export function attachGuestCookie(response: any, value?: string) {
   if (!value) return;
   response.cookies.set(GUEST_SESSION_COOKIE, value, {
     httpOnly: true,

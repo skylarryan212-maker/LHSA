@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+type SupabaseClient<T = any> = any;
 import { z } from "zod";
 import type {
   Database,
@@ -178,12 +178,11 @@ async function loadRouterContextPayload(
   projectName?: string | null
 ): Promise<RouterContextPayload> {
   const [{ data: topics }, { data: recent }, artifacts, crossChatTopics] = await Promise.all([
-    supabase
+    (supabase
       .from("conversation_topics")
       .select("*")
       .eq("conversation_id", conversationId)
-      .order("created_at", { ascending: true })
-      .returns<ConversationTopic[]>(),
+      .order("created_at", { ascending: true })) as any,
     supabase
       .from("messages")
       .select("id, role, content, created_at, topic_id")
@@ -249,14 +248,13 @@ async function loadCrossConversationTopics(
   );
   const conversationIds = Array.from(conversationMap.keys());
 
-  const { data: topicRows } = await supabase
+  const { data: topicRows } = await (supabase
     .from("conversation_topics")
     .select("*")
     .in("conversation_id", conversationIds)
     .lte("token_estimate", CROSS_CHAT_TOKEN_LIMIT)
     .order("updated_at", { ascending: false })
-    .limit(MAX_FOREIGN_TOPICS)
-    .returns<ConversationTopic[]>();
+    .limit(MAX_FOREIGN_TOPICS)) as any;
 
   if (!Array.isArray(topicRows)) {
     return [];
@@ -303,7 +301,7 @@ async function loadCandidateArtifacts(
     }
   }
 
-  const { data } = await query.returns<Artifact[]>();
+  const { data } = await (query as any);
   const artifacts = Array.isArray(data) ? data : [];
   if (!artifacts.length) {
     return [];
@@ -503,11 +501,10 @@ async function ensureTopicAssignment({
   }
 
   if (needsNewTopic) {
-    const { data: existingTopics } = await supabase
+    const { data: existingTopics } = await (supabase
       .from("conversation_topics")
       .select("id, label, parent_topic_id, description, summary")
-      .eq("conversation_id", conversationId)
-      .returns<ConversationTopic[]>();
+      .eq("conversation_id", conversationId)) as any;
     const topicsList = Array.isArray(existingTopics) ? existingTopics : [];
 
     const rawLabel =

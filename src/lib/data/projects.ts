@@ -9,12 +9,12 @@ export async function getProjectsForUser() {
   const supabase = await supabaseServer();
   const userId = await requireUserIdServer();
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase
     .from("projects")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
-    .returns<ProjectRow[]>();
+  ) as any;
 
   if (error) {
     throw new Error(`Failed to load projects: ${error.message}`);
@@ -38,7 +38,7 @@ export async function createProject(params: { name: string; icon?: string; color
     .from("projects")
     .insert([newProject] as any))
     .select()
-    .single<ProjectRow>();
+    .single();
 
   if (error || !data) {
     throw new Error(
@@ -102,12 +102,12 @@ export async function getProjectById(projectId: string) {
   const supabase = await supabaseServer();
   const userId = await requireUserIdServer();
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase
     .from("projects")
     .select("*")
     .eq("id", projectId)
     .eq("user_id", userId)
-    .maybeSingle<ProjectRow>();
+    .maybeSingle()) as any;
 
   if (error) {
     throw new Error(`Failed to load project: ${error.message}`);

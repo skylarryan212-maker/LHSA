@@ -360,7 +360,7 @@ export function SettingsModal({ isOpen, onClose, initialTab = 'preferences' }: S
     setDeleteAllChatsProcessing(true)
     
     try {
-      const { deleteAllConversationsAction } = await import('@/app/actions/chat-actions')
+      const { deleteAllConversationsAction } = await import('../app/actions/chat-actions.js')
       await deleteAllConversationsAction()
       try {
         await refreshChats()

@@ -1,4 +1,4 @@
-import type OpenAI from "openai";
+type OpenAI = any;
 import { createOpenAIClient, getOpenAIRequestId } from "@/lib/openai/client";
 import { encodingForModel } from "js-tiktoken";
 import { calculateEmbeddingCost } from "@/lib/pricing";

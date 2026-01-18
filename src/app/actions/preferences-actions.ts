@@ -4,5 +4,10 @@ export async function getPreferences(...args: any[]) {
 }
 
 export async function updatePreferences(...args: any[]) {
-  return { success: false };
+  return { success: false, message: "Not implemented" };
+}
+
+// Compatibility export for settings modal
+export async function updateAccentColorAction(..._args: any[]) {
+  return { success: false, error: "Not implemented in VS Code extension", message: "Not implemented" };
 }

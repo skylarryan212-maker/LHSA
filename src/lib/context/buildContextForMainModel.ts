@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+type SupabaseClient<T = any> = any;
 import type { Database } from "@/lib/supabase/types";
 import type { RouterDecision } from "@/lib/router/types";
 import { estimateTokens } from "@/lib/tokens/estimateTokens";
@@ -97,11 +97,10 @@ export async function buildContextForMainModel({
     const missingIds = requestedTopicIds.filter(id => !existingIds.has(id));
     
     if (missingIds.length > 0) {
-      const { data: topics, error: topicError } = await supabase
+      const { data: topics, error: topicError } = await (supabase
         .from("conversation_topics")
         .select("*")
-        .in("id", missingIds)
-        .returns<TopicRow[]>();
+        .in("id", missingIds)) as any;
 
       if (!topicError && Array.isArray(topics)) {
         topicRows = [...topicRows, ...topics];
@@ -116,12 +115,11 @@ export async function buildContextForMainModel({
 
   if (!primaryTopic && primaryTopicId) {
     // Fallback: attempt to fetch the primary topic directly if not returned above
-    const { data: fallbackTopic } = await supabase
+    const { data: fallbackTopic } = await (supabase
       .from("conversation_topics")
       .select("*")
       .eq("id", primaryTopicId)
-      .maybeSingle()
-      .returns<TopicRow>();
+      .maybeSingle()) as any;
     if (fallbackTopic) {
       primaryTopic = fallbackTopic as TopicRow;
       topicRows.push(primaryTopic);
@@ -731,11 +729,10 @@ async function loadArtifactsByIds(
   if (!ids.length || tokenBudget <= 0) {
     return [];
   }
-  const { data } = await supabase
+  const { data } = await (supabase
     .from("artifacts")
     .select("*")
-    .in("id", ids)
-    .returns<ArtifactRow[]>();
+    .in("id", ids)) as any;
   const artifacts = Array.isArray(data) ? data : [];
   if (!artifacts.length) {
     return [];

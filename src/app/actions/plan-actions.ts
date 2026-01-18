@@ -9,3 +9,19 @@ export async function getUserPlan(...args: any[]): Promise<PlanType> {
 export async function updateUserPlan(...args: any[]) {
   return { success: false, error: "Not implemented in VS Code extension" };
 }
+
+export async function getUserPlanDetails(..._args: any[]) {
+  return {
+    planType: "free",
+    renewalDate: null,
+    cancelAt: null,
+    cancelAtPeriodEnd: false,
+    isActive: false,
+    pendingPlanType: null,
+    pendingSwitchAt: null,
+  };
+}
+
+export async function cancelSubscription(..._args: any[]) {
+  return { success: false, error: "Not implemented in VS Code extension", message: "Not implemented" };
+}

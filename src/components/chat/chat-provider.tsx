@@ -193,7 +193,7 @@ export function ChatProvider({ children, initialChats = [], userId }: ChatProvid
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
-      const { data, error } = await query.returns<ConversationRow[]>();
+      const { data, error } = await (query as any);
 
       if (error) {
         console.warn("Failed to refresh conversations", error);
@@ -205,12 +205,12 @@ export function ChatProvider({ children, initialChats = [], userId }: ChatProvid
         return agent !== "human-writing" && agent !== "market-agent" && agent !== "sga";
       });
       const conversationIds = rows.map((row) => row.id);
-      const { data: messageRows } = await supabaseClient
+      const { data: messageRows } = await (supabaseClient
         .from("messages")
         .select("*")
         .in("conversation_id", conversationIds)
         .order("created_at", { ascending: true })
-        .returns<Database["public"]["Tables"]["messages"]["Row"][]>();
+      ) as any;
 
       const messageMap = new Map<string, StoredMessage[]>();
       const latestMessageTime = new Map<string, string>();

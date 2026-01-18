@@ -202,6 +202,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
     const handlePanelMessage = async (message: any, panel: vscode.WebviewPanel) => {
         switch (message.type) {
+            case 'webviewHtmlLoaded': {
+                console.log('Webview HTML loaded in panel');
+                return;
+            }
+            case 'webviewError': {
+                console.error('Webview runtime error:', message.message, message.stack ?? '');
+                return;
+            }
             case 'sendCommand': {
                 console.log(`LHSA Command Center prompt: ${message.value}`);
                 return;
@@ -265,17 +273,61 @@ export async function activate(context: vscode.ExtensionContext) {
         }, null, context.subscriptions);
 
         const scriptUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'dist', 'webview.js'));
-        const csp = `default-src 'none'; img-src ${panel.webview.cspSource} https:; script-src ${panel.webview.cspSource}; style-src ${panel.webview.cspSource} 'unsafe-inline'; font-src ${panel.webview.cspSource};`;
-        panel.webview.html = `<!DOCTYPE html>
+        // NOTE: Allowing 'unsafe-inline' for script-src temporarily to enable inline debug helpers
+        // Remove or tighten this before publishing extension.
+        const csp = `default-src 'none'; img-src ${panel.webview.cspSource} https:; script-src ${panel.webview.cspSource} 'unsafe-inline'; style-src ${panel.webview.cspSource} 'unsafe-inline'; font-src ${panel.webview.cspSource};`;
+                panel.webview.html = `<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="${csp}">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="${csp}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        #lhsa-debug-overlay { position: fixed; right: 12px; bottom: 12px; background: rgba(0,0,0,0.7); color: #fff; padding: 8px 12px; border-radius: 8px; font-family: system-ui, sans-serif; font-size: 12px; z-index: 99999; }
+        #lhsa-debug-overlay.fail { background: rgba(128,20,20,0.9); }
+        #lhsa-debug-overlay.ok { background: rgba(20,128,20,0.9); }
+    </style>
 </head>
 <body>
-  <div id="root"></div>
-  <script src="${scriptUri}"></script>
+    <div id="root"></div>
+    <div id="lhsa-debug-overlay">webview: initializing…</div>
+    <script>
+        (function(){
+            const debug = document.getElementById('lhsa-debug-overlay');
+            function set(msg, cls){ if(debug){ debug.textContent = 'webview: ' + msg; debug.className = cls ? cls : ''; } }
+
+            // forward errors to extension host via a queue so the main bundle can acquire the VS Code API
+            try {
+                window.__lhsa_event_queue = window.__lhsa_event_queue || [];
+                window.addEventListener('error', (ev) => {
+                    set('runtime error', 'fail');
+                    try { window.__lhsa_event_queue.push({ type: 'webviewError', message: ev.message, stack: ev.error?.stack }); } catch (e){}
+                });
+                window.addEventListener('unhandledrejection', (ev) => {
+                    set('unhandled rejection', 'fail');
+                    try { window.__lhsa_event_queue.push({ type: 'webviewError', message: ev.reason?.message || String(ev.reason) }); } catch (e){}
+                });
+                try { window.__lhsa_event_queue.push({ type: 'webviewHtmlLoaded' }); } catch (e){}
+            } catch (e) { set('error attaching handlers', 'fail'); }
+
+            // Ensure process.env exists for libraries that reference process in the bundle
+            try {
+                if (typeof window.process === 'undefined') {
+                    // minimal shim
+                    window.process = { env: { NODE_ENV: 'development' } };
+                } else if (!window.process.env) {
+                    window.process.env = { NODE_ENV: 'development' };
+                }
+            } catch (e) {}
+
+            // Dynamically load the webview script and update overlay on load/error
+            const s = document.createElement('script');
+            s.src = '${scriptUri}';
+            s.onload = function(){ set('bundle loaded', 'ok'); try{ window.__lhsa_event_queue.push({ type: 'webviewBundleLoaded' }); }catch(e){} };
+            s.onerror = function(ev){ set('bundle failed to load', 'fail'); try{ window.__lhsa_event_queue.push({ type: 'webviewError', message: 'bundle failed to load: ${scriptUri}' }); }catch(e){} };
+            document.body.appendChild(s);
+        })();
+    </script>
 </body>
 </html>`;
         panel.webview.onDidReceiveMessage(async message => await handlePanelMessage(message, panel), undefined, context.subscriptions);

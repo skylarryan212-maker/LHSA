@@ -1,18 +1,22 @@
-'use client'
+"use client";
 
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import remarkMath from 'remark-math'
-import rehypeKatex from 'rehype-katex'
-import rehypeRaw from 'rehype-raw'
 import dynamic from 'next/dynamic'
 import { ArrowLeft, Check, Copy, Download, Globe, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import React, { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { CitationMetadata } from '@/lib/chatTypes'
-import type { PluggableList } from 'unified'
 import 'katex/dist/katex.min.css'
+
+type PluggableList = any[];
+
+type MarkdownModules = {
+  ReactMarkdown: any;
+  remarkGfm: any;
+  remarkMath: any;
+  rehypeKatex: any;
+  rehypeRaw: any;
+};
 
 // Lazy load syntax highlighter to reduce initial bundle
 const SyntaxHighlighter = dynamic(
@@ -95,6 +99,35 @@ export const MarkdownContent = memo(function MarkdownContent({ content, messageI
   const [lightboxCopied, setLightboxCopied] = useState(false)
   const [lightboxOriginalSrc, setLightboxOriginalSrc] = useState<string | null>(null)
   const tableRefs = useRef<Map<string, HTMLTableElement>>(new Map())
+  const [markdownModules, setMarkdownModules] = useState<MarkdownModules | null>(null)
+
+  useEffect(() => {
+    let active = true
+    void (async () => {
+      try {
+        const [markdown, gfm, math, katex, raw] = await Promise.all([
+          import('react-markdown'),
+          import('remark-gfm'),
+          import('remark-math'),
+          import('rehype-katex'),
+          import('rehype-raw'),
+        ])
+        if (!active) return
+        setMarkdownModules({
+          ReactMarkdown: markdown.default,
+          remarkGfm: gfm.default,
+          remarkMath: math.default,
+          rehypeKatex: katex.default,
+          rehypeRaw: raw.default,
+        })
+      } catch (err) {
+        console.error('Failed to load markdown modules', err)
+      }
+    })()
+    return () => {
+      active = false
+    }
+  }, [])
 
   const normalizeIncompleteMarkdown = useCallback((text: string, isStreaming: boolean): string => {
     if (!isStreaming || !text) return text;
@@ -743,12 +776,13 @@ export const MarkdownContent = memo(function MarkdownContent({ content, messageI
 
 
   const remarkPlugins = useMemo<PluggableList>(() => {
-    const plugins: PluggableList = [remarkGfm]
+    if (!markdownModules) return []
+    const plugins: PluggableList = [markdownModules.remarkGfm]
     if (enableMath) {
-      plugins.push(remarkMath)
+      plugins.push(markdownModules.remarkMath)
     }
     return plugins
-  }, [enableMath])
+  }, [enableMath, markdownModules])
 
   const sourceTagPattern = useMemo(() => /\[(?:sources?|source)\s*:[^\]]*\]/gi, [])
   const contentWithInlineCitations = useMemo(() => {
@@ -757,12 +791,13 @@ export const MarkdownContent = memo(function MarkdownContent({ content, messageI
   }, [safeContent, citationUrls, sourceTagPattern])
 
   const rehypePlugins = useMemo<PluggableList>(() => {
-    const plugins: PluggableList = [rehypeRaw]
+    if (!markdownModules) return []
+    const plugins: PluggableList = [markdownModules.rehypeRaw]
     if (enableMath) {
-      plugins.push(rehypeKatex)
+      plugins.push(markdownModules.rehypeKatex)
     }
     return plugins
-  }, [contentWithInlineCitations, enableMath])
+  }, [contentWithInlineCitations, enableMath, markdownModules])
 
   const components = useMemo(() => ({
     'citation-inline': () => <InlineCitationBadge urls={citationUrls} />,
@@ -1009,6 +1044,8 @@ export const MarkdownContent = memo(function MarkdownContent({ content, messageI
     }),
   }), [citationUrls, messageId, generatedFiles, citationUrlSet, copiedCode, handleCopyCode, proxiedImageSrc])
 
+  const MarkdownRenderer = markdownModules?.ReactMarkdown
+
   const markdownNode = (
     <MarkdownErrorBoundary
       fallback={
@@ -1017,13 +1054,19 @@ export const MarkdownContent = memo(function MarkdownContent({ content, messageI
         </p>
       }
     >
-      <ReactMarkdown
-        remarkPlugins={remarkPlugins}
-        rehypePlugins={rehypePlugins}
-        components={components as any}
-      >
-        {contentWithInlineCitations}
-      </ReactMarkdown>
+      {MarkdownRenderer ? (
+        <MarkdownRenderer
+          remarkPlugins={remarkPlugins}
+          rehypePlugins={rehypePlugins}
+          components={components as any}
+        >
+          {contentWithInlineCitations}
+        </MarkdownRenderer>
+      ) : (
+        <p className="text-base leading-relaxed text-foreground mb-4 break-words whitespace-pre-wrap">
+          {safeContent}
+        </p>
+      )}
     </MarkdownErrorBoundary>
   )
 

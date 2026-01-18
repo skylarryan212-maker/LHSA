@@ -29,8 +29,8 @@ export async function getMemoryTypes(userId: string): Promise<string[]> {
  * Get all unique memory type categories for the current user (client-side, via RLS).
  */
 export async function fetchMemoryTypes(): Promise<string[]> {
-  const { default: browserClient } = await import("@/lib/supabase/browser-client");
-  const { data, error } = await (browserClient as any)
+  const browserClient = (await import("./supabase/browser-client.js")).default as any;
+  const { data, error } = await browserClient
     .from("memories")
     .select("type")
     .eq("enabled", true);
@@ -83,8 +83,8 @@ export async function fetchMemories({
     const admin = await supabaseServerAdmin();
     client = admin as any;
   } else {
-    const { default: browserClient } = await import("@/lib/supabase/browser-client");
-    client = browserClient as any;
+    const browserClient = (await import("./supabase/browser-client.js")).default as any;
+    client = browserClient;
   }
   
   let q = client
@@ -112,7 +112,7 @@ export async function fetchMemories({
 }
 
 export async function updateMemoryEnabled(id: string, enabled: boolean) {
-  const { default: browserClient } = await import("@/lib/supabase/browser-client");
+  const browserClient = (await import("./supabase/browser-client.js")).default as any;
   const { error } = await browserClient
     .from('memories')
     .update({ enabled })
@@ -128,8 +128,8 @@ export async function deleteMemory(id: string, userId?: string) {
     const admin = await supabaseServerAdmin();
     client = admin as any;
   } else {
-    const { default: browserClient } = await import("@/lib/supabase/browser-client");
-    client = browserClient as any;
+    const browserClient = (await import("./supabase/browser-client.js")).default as any;
+    client = browserClient;
   }
   
   let query = client

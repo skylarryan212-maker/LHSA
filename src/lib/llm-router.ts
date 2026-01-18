@@ -104,7 +104,7 @@ export async function routeWithLLM(
   recentMessages?: Array<{ role?: string | null; content?: string | null }>
 ): Promise<LLMRouterDecision | null> {
   try {
-    const { callDeepInfraLlama } = await import("@/lib/deepInfraLlama");
+    const { callDeepInfraLlama } = await import("./deepInfraLlama.js");
     // Build context message
     let contextNote = "";
     if (context?.userModelPreference && context.userModelPreference !== "auto") {
@@ -421,7 +421,7 @@ export async function analyzeForMemory(
   existingMemories?: Array<{ title: string; content: string }>
 ): Promise<MemoryAnalysis | null> {
   try {
-    const { callDeepInfraLlama } = await import("@/lib/deepInfraLlama");
+    const { callDeepInfraLlama } = await import("./deepInfraLlama.js");
 
     // Build context about existing memories to avoid duplicates
     let existingContext = "";
