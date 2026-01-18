@@ -1,6 +1,5 @@
 // Mock app actions for VS Code extension
-// Align PlanType with usage limits used across the app
-export type PlanType = "free" | "plus" | "max";
+export type PlanType = "free" | "pro" | "premium";
 
 export async function getUserPlan(...args: any[]): Promise<PlanType> {
   return "free";

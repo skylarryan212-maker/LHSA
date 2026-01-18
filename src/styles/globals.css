@@ -280,7 +280,11 @@
 .quarry-theme [data-radix-dropdown-menu-content],
 .quarry-theme [data-radix-select-content],
 .quarry-theme [role="menu"],
-.quarry-theme [role="listbox"] {
+.quarry-theme [role="listbox"],
+/* Support our local DropdownMenu data-slot attributes */
+.quarry-theme [data-slot="dropdown-menu-content"],
+.quarry-theme [data-slot="select-content"],
+.quarry-theme [data-slot="popover-content"] {
   background-color: var(--popover) !important;
   color: var(--popover-foreground) !important;
   border: 1px solid var(--border) !important;
@@ -289,20 +293,27 @@
 .quarry-theme [role="menuitem"],
 .quarry-theme [role="menuitemcheckbox"],
 .quarry-theme [role="menuitemradio"],
-.quarry-theme [data-radix-dropdown-menu-item] {
+.quarry-theme [data-radix-dropdown-menu-item],
+/* Support our local DropdownMenu item attribute */
+.quarry-theme [data-slot="dropdown-menu-item"] {
   color: var(--popover-foreground) !important;
 }
 
 /* Muted descriptions inside menus */
 .quarry-theme [role="menuitem"] .text-muted-foreground,
-.quarry-theme [data-radix-dropdown-menu-content] .text-muted-foreground {
+.quarry-theme [data-radix-dropdown-menu-content] .text-muted-foreground,
+/* local slot variant */
+.quarry-theme [data-slot="dropdown-menu-content"] .text-muted-foreground {
   color: var(--muted-foreground) !important;
 }
 
 /* Ensure icons inside menus use the correct foreground color */
 .quarry-theme [data-radix-dropdown-menu-content] svg,
 .quarry-theme [data-radix-popper-content-wrapper] svg,
-.quarry-theme [role="menu"] svg {
+.quarry-theme [role="menu"] svg,
+/* local slot variants */
+.quarry-theme [data-slot="dropdown-menu-content"] svg,
+.quarry-theme [data-slot="dropdown-menu-item"] svg {
   color: var(--muted-foreground) !important;
 }
 

@@ -38,10 +38,8 @@ export function UserProfileMenu({ isCompressed, onSettingsOpen, onGeneralSetting
   const [avatarFailed, setAvatarFailed] = useState(false)
   const showAvatar = Boolean(avatarUrl) && !avatarFailed && !isGuest
 
-  const normalizedPlan = (typeof plan === 'string' ? plan : 'free').toLowerCase()
-
   const getPlanIcon = () => {
-    switch (normalizedPlan) {
+    switch (plan) {
       case 'max':
         return <Crown className="h-2.5 w-2.5" suppressHydrationWarning />
       case 'plus':
@@ -53,8 +51,8 @@ export function UserProfileMenu({ isCompressed, onSettingsOpen, onGeneralSetting
 
   const getPlanLabel = () => {
     if (isGuest) return 'Guest'
-    if (normalizedPlan === 'max') return 'Max'
-    if (normalizedPlan === 'plus') return 'Plus'
+    if (plan === 'max') return 'Max'
+    if (plan === 'plus') return 'Plus'
     return 'Free'
   }
 

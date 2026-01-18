@@ -18,11 +18,3 @@ export async function updateConversationTitle(...args: any[]) {
 export async function loadOlderMessages(...args: any[]) {
   return { success: false, error: "Not implemented in VS Code extension" };
 }
-
-// Backwards-compatible aliases used by imported components
-export const deleteConversationAction = deleteConversation;
-export async function moveConversationToProjectAction(...args: any[]) {
-  // Not implemented in extension; provide a stub that resolves to a no-op result
-  return { success: false, error: "moveConversationToProject not implemented" };
-}
-export const renameConversationAction = updateConversationTitle;

@@ -11,7 +11,6 @@ import { WelcomeScreen } from "./components/chat/welcome-screen";
 import { ChatComposer, type SearchControls } from "./components/chat-composer";
 import { Button } from "./components/ui/button";
 import { Check, ChevronDown } from "lucide-react";
-import { ChatSidebar } from "./components/chat-sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,9 +41,17 @@ function App() {
   const centeredComposerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    document.body.classList.add("dark", "quarry-theme");
+    try {
+      document.body.classList.add("dark", "quarry-theme");
+    } catch (e) {
+      // noop in non-browser environments
+    }
     return () => {
-      document.body.classList.remove("dark", "quarry-theme");
+      try {
+        document.body.classList.remove("dark", "quarry-theme");
+      } catch (e) {
+        // noop
+      }
     };
   }, []);
 
@@ -68,20 +75,6 @@ function App() {
     }
   };
 
-  const sidebarConversations = [
-    { id: "1", title: "New chat", timestamp: new Date().toISOString() },
-    { id: "2", title: "Design review notes", timestamp: new Date().toISOString() },
-    { id: "3", title: "Onboarding plan", timestamp: new Date().toISOString() },
-  ];
-  const sidebarProjects = [
-    { id: "p1", name: "Quarry Demo", metadata: {} },
-    { id: "p2", name: "Research", metadata: {} },
-  ];
-  const projectChats = {
-    p1: [{ id: "p1c1", title: "Landing page", timestamp: new Date().toISOString() }],
-    p2: [{ id: "p2c1", title: "Notes", timestamp: new Date().toISOString() }],
-  };
-
   const composerInner = (
     <ChatComposer
       onSubmit={handleSubmit}
@@ -99,31 +92,11 @@ function App() {
     <>
       <style>{css}</style>
       <div className="dark quarry-theme">
-        <div className="bg-[#0f0f1a] flex h-[100dvh] max-h-[100dvh] w-full min-w-0 text-foreground dark overflow-hidden overscroll-y-none is-chat-page">
-          <ChatSidebar
-            isOpen={true}
-            onToggle={() => undefined}
-            selectedChatId={"1"}
-            conversations={sidebarConversations}
-            chatgptConversations={[]}
-            claudeConversations={[]}
-            projects={sidebarProjects}
-            projectChats={projectChats}
-            onChatSelect={() => undefined}
-            onProjectChatSelect={() => undefined}
-            onNewChat={() => undefined}
-            onNewProject={() => undefined}
-            onProjectSelect={() => undefined}
-            selectedProjectId={"p1"}
-            onSettingsOpen={() => undefined}
-            onGeneralSettingsOpen={() => undefined}
-            onRefreshChats={() => undefined}
-            onRefreshProjects={() => undefined}
-          />
+        <div className="bg-[#0f0f1a] flex h-[100dvh] max-h-[100dvh] w-full min-w-0 text-foreground dark overflow-hidden overscroll-y-none px-1 lg:px-2 is-chat-page">
           <Suspense fallback={null}>
             <div
               data-main-panel="true"
-              className="bg-[#151527] flex flex-1 flex-col w-full min-w-0 min-h-0 overflow-hidden lg:my-2 lg:mr-2 lg:rounded-2xl lg:border border-indigo-400/[0.08] copilot-gradient-bg show-gradient"
+              className="bg-[#151527] flex flex-1 flex-col w-full min-w-0 min-h-0 overflow-hidden lg:my-2 lg:mx-2 lg:rounded-2xl lg:border border-indigo-400/[0.08] copilot-gradient-bg show-gradient"
             >
               {/* Header bar */}
               <div className="sticky top-0 z-20 flex h-[53px] items-center justify-between border-b border-indigo-400/[0.08] bg-[#151527] px-3 lg:px-6 lg:rounded-t-2xl">

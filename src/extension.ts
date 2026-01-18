@@ -266,47 +266,16 @@ export async function activate(context: vscode.ExtensionContext) {
 
         const scriptUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'dist', 'webview.js'));
         const csp = `default-src 'none'; img-src ${panel.webview.cspSource} https:; script-src ${panel.webview.cspSource}; style-src ${panel.webview.cspSource} 'unsafe-inline'; font-src ${panel.webview.cspSource};`;
-                panel.webview.html = `<!DOCTYPE html>
+        panel.webview.html = `<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="${csp}">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="${csp}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <div id="root"></div>
-    <div id="__lhsa_error_overlay" style="position:fixed;inset:12px;z-index:99999;pointer-events:none;display:none">
-        <div style="pointer-events:auto;background:rgba(0,0,0,0.85);color:#fff;padding:12px;border-radius:8px;max-height:60vh;overflow:auto;font-family:monospace;font-size:12px;white-space:pre-wrap"></div>
-    </div>
-    <script>
-        (function(){
-            function showError(msg){
-                try{
-                    const outer = document.getElementById('__lhsa_error_overlay');
-                    if(!outer) return;
-                    const inner = outer.querySelector('div');
-                    inner.textContent = String(msg);
-                    outer.style.display = 'block';
-                }catch(e){console.error(e)}
-            }
-            window.addEventListener('error', function(ev){
-                showError('Error: ' + (ev && ev.message) + '\n' + (ev && ev.filename ? ev.filename + ':' + ev.lineno + ':' + ev.colno + '\n' : '') + (ev && ev.error && ev.error.stack ? ev.error.stack : ''));
-            });
-            window.addEventListener('unhandledrejection', function(ev){
-                showError('Unhandled Rejection: ' + (ev && ev.reason && ev.reason.stack ? ev.reason.stack : JSON.stringify(ev && ev.reason)));
-            });
-            window.onerror = function(msg, src, line, col, err){
-                showError('onerror: ' + msg + '\n' + (src ? (src + ':' + line + ':' + col + '\n') : '') + (err && err.stack ? err.stack : ''));
-            };
-            // small heartbeat to ensure the DOM is present for early failures
-            setTimeout(function(){
-                if(!document.getElementById('root')){
-                    showError('Missing #root in webview DOM');
-                }
-            },1000);
-        })();
-    </script>
-    <script src="${scriptUri}"></script>
+  <div id="root"></div>
+  <script src="${scriptUri}"></script>
 </body>
 </html>`;
         panel.webview.onDidReceiveMessage(async message => await handlePanelMessage(message, panel), undefined, context.subscriptions);

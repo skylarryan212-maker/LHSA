@@ -14,7 +14,3 @@ export async function deleteProject(...args: any[]) {
 export async function updateProject(...args: any[]) {
   return { success: false, error: "Not implemented in VS Code extension" };
 }
-
-// Backwards-compatible aliases
-export const deleteProjectAction = deleteProject;
-export const renameProjectAction = updateProject;
